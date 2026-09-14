@@ -2,6 +2,14 @@
 
 Gives your ship's autopilot a little more sense. It can launch from suitable surfaces, plan routes around celestial bodies, and brake to match your destination's velocity. It also checks for nearby physical obstacles and can stop and wait when the way ahead is blocked.
 
+## Video demonstration
+
+<div align="left">
+      <a href="https://www.youtube.com/watch?v=ZeWU5-fn1lY">
+         <img src="https://i.ytimg.com/vi/ZeWU5-fn1lY/maxres1.jpg" style="width:100%;">
+      </a>
+</div>
+
 ## Install
 
 Install the mod ZIP through [Outer Wilds Mod Manager](https://outerwildsmods.com/mod-manager/):
