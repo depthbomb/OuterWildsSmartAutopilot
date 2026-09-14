@@ -17,7 +17,16 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 if ($Build) {
-    & (Join-Path $PSScriptRoot 'build.ps1')
+    if (Get-Process -Name OuterWilds, OWML.Launcher -ErrorAction SilentlyContinue) {
+        throw 'Close the game and launcher before building the test mod.'
+    }
+
+    $project = Join-Path (Split-Path $PSScriptRoot -Parent) 'SmartAutopilot\SmartAutopilot.csproj'
+    $output = Join-Path $OwmlPath 'Mods\Depthbomb.SmartAutopilot'
+    dotnet build $project -c Release "-p:OutputPath=$output"
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Mod build failed.'
+    }
 }
 
 $root = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Codex\ProjectNotes\outer-wilds-smart-autopilot\automation'

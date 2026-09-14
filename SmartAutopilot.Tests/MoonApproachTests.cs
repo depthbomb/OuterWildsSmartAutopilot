@@ -3,12 +3,6 @@ using SmartAutopilot.Navigation;
 
 internal static class MoonApproachTests
 {
-    public static void Profile()
-    {
-        Run(false);
-        RecoveredApproach(false);
-    }
-
     public static void Verify()
     {
         Run(true);
@@ -58,24 +52,27 @@ internal static class MoonApproachTests
             PhysicalRadius = 100
         });
         var computer = new FlightComputer();
-        bool arrived = false;
-        double effort = 0;
-        double minimum = double.PositiveInfinity;
-        int escapes = 0;
-        bool escaping = false;
-        for (int step = 0; step < 10000; step++)
+        var arrived  = false;
+        var effort   = (double)0;
+        var minimum  = double.PositiveInfinity;
+        var escapes  = 0;
+        var escaping = false;
+        for (var step = 0; step < 10000; step++)
         {
             state.Time = step * state.DeltaTime;
+            
             var primary = state.Obstacles[0];
             primary.Acceleration = new Vector(2.5, 0, 1);
-            primary.Velocity = new Vector(100, 0, 150) + primary.Acceleration * state.Time;
-            primary.Position = new Vector(100, 0, 150) * state.Time + primary.Acceleration * (0.5 * state.Time * state.Time);
-            double angle = phase + omega * state.Time;
-            var radial = new Vector(Math.Cos(angle), 0, Math.Sin(angle));
+            primary.Velocity     = new Vector(100, 0, 150) + primary.Acceleration * state.Time;
+            primary.Position     = new Vector(100, 0, 150)                        * state.Time + primary.Acceleration * (0.5 * state.Time * state.Time);
+
+            var angle   = phase + omega * state.Time;
+            var radial  = new Vector(Math.Cos(angle), 0, Math.Sin(angle));
             var tangent = new Vector(-radial.Z, 0, radial.X);
-            state.TargetPosition     = primary.Position + radial * 1000;
-            state.TargetVelocity     = primary.Velocity + tangent * 55;
-            state.TargetAcceleration = primary.Acceleration - radial * 3.025;
+
+            state.TargetPosition            = primary.Position     + radial  * 1000;
+            state.TargetVelocity            = primary.Velocity     + tangent * 55;
+            state.TargetAcceleration        = primary.Acceleration - radial  * 3.025;
             state.Obstacles[1].Position     = state.TargetPosition;
             state.Obstacles[1].Velocity     = state.TargetVelocity;
             state.Obstacles[1].Acceleration = state.TargetAcceleration;
@@ -115,20 +112,22 @@ internal static class MoonApproachTests
                 break;
             }
 
-            effort += command.Acceleration.Length * state.DeltaTime;
+            effort         += command.Acceleration.Length                         * state.DeltaTime;
             state.Velocity += (command.Acceleration + state.ExternalAcceleration) * state.DeltaTime;
-            state.Position += state.Velocity * state.DeltaTime;
+            state.Position += state.Velocity                                      * state.DeltaTime;
         }
 
-        double remaining = (state.Position - state.TargetPosition).Length - state.ArrivalRadius;
+        var remaining = (state.Position - state.TargetPosition).Length - state.ArrivalRadius;
+
         Console.WriteLine($"MOON {name}: dt={timestep:F3}; arrived={arrived}; time={state.Time:F2}s; effort={effort:F1}; clearance={minimum:F1}m; escapes={escapes}; remaining={remaining:F1}m");
-        double limit = name == "Long approach" ? 55 : 32;
+
+        var limit = name == "Long approach" ? 55 : 32;
         if (verify && (!arrived || state.Time > limit || (state.Velocity - state.TargetVelocity).Length > 0.5))
         {
             throw new Exception("Moon approach did not complete within its time and velocity limits: " + name);
         }
 
-        bool repeatedRecovery = name == "Recovered approach" && (escapes != 0 || effort > 500 || minimum < 240 || state.Time > 20 || Math.Abs(remaining) > 20);
+        var repeatedRecovery = name == "Recovered approach" && (escapes != 0 || effort > 500 || minimum < 240 || state.Time > 20 || Math.Abs(remaining) > 20);
         if (verify && repeatedRecovery)
         {
             throw new Exception("Recovered approach lost its smooth, clear arrival");

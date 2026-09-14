@@ -1,0 +1,39 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      prerelease:
+        description: Prerelease
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - name: Test
+        run: dotnet test -c Release -p:RestoreLockedMode=true
+      - name: Package
+        shell: pwsh
+        run: ./Package.ps1
+      - name: Create draft release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          $manifest = Get-Content SmartAutopilot/manifest.json -Raw | ConvertFrom-Json
+          $package = "artifacts/$($manifest.uniqueName)-$($manifest.version).zip"
+          $options = @('--draft', '--title', $manifest.version, '--generate-notes', '--target', $env:GITHUB_SHA)
+          if ($env:PRERELEASE -eq 'true') {
+            $options += '--prerelease'
+          }
+          gh release create $manifest.version $package "$package.sha256" @options

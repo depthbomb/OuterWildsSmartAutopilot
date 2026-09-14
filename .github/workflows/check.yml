@@ -17,5 +17,7 @@ jobs:
         with:
           global-json-file: global.json
       - name: Build and check navigation
+        run: dotnet test -c Release -p:RestoreLockedMode=true
+      - name: Package mod
         shell: pwsh
-        run: ./build.ps1 -ChecksOnly
+        run: ./Package.ps1

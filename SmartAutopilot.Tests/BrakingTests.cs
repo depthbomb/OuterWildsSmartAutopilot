@@ -1,3 +1,4 @@
+using Xunit;
 using System;
 using SmartAutopilot.Navigation;
 
@@ -21,16 +22,15 @@ internal readonly struct BrakingResult
 
 internal static class BrakingTests
 {
-    public static void Profile()
-    {
-        Console.WriteLine("Synthetic approaches from 11193m, initially 93.9m/s relative speed; 2500m arrival radius. Gravity fixtures are models, not captured game trajectories.");
-        Fly("Clear", 0, 50, 0.02, default, true);
-        Fly("Increasing attraction", 12, 50, 0.02, default, true);
-        Fly("Cross gravity and moving target", 0, 50, 1.0 / 60, new Vector(0, -8, 0), true);
-        Fly("Locally limited thrust", 6, 20, 0.02, default, true);
-    }
-
-    public static BrakingResult Fly(string name, double surfaceGravity, double thrust, double dt, Vector crossGravity, bool trace = false, double targetRadius = 0, Vector? initialVelocity = null, double initialDistance = 11193)
+    public static BrakingResult Fly(string name,
+                                    double surfaceGravity,
+                                    double thrust,
+                                    double dt,
+                                    Vector crossGravity,
+                                    bool trace = false,
+                                    double targetRadius = 0,
+                                    Vector? initialVelocity = null,
+                                    double initialDistance = 11193)
     {
         var drift = new Vector(150, 30, -20);
         var state = new FlightState
@@ -55,25 +55,30 @@ internal static class BrakingTests
             });
         }
 
-        double brakingStart = -1;
-        double slowTime = 0;
-        double peakSpeed = 0;
-        double nextSample = 0;
-        for (int step = 0; step < 15000; step++)
+        var brakingStart = (double)-1;
+        var slowTime     = (double)0;
+        var peakSpeed    = (double)0;
+        var nextSample   = (double)0;
+        for (var step = 0; step < 15000; step++)
         {
             state.Time = step * dt;
             var offset = state.TargetPosition - state.Position;
+
             state.ExternalAcceleration = offset.Unit * (surfaceGravity * Math.Pow(2500 / offset.Length, 2)) + crossGravity;
+
             var relativeVelocity = state.Velocity - state.TargetVelocity;
-            double speed = relativeVelocity.Length;
-            double remaining = offset.Length - state.ArrivalRadius;
+            var speed            = relativeVelocity.Length;
+            var remaining        = offset.Length - state.ArrivalRadius;
+
             peakSpeed = Math.Max(peakSpeed, speed);
+
             var command = computer.Step(state);
-            Require(command.Phase != FlightPhase.Escape, "The arrival profile needlessly triggered target-body avoidance in " + name + " at " + state.Time + "s, remaining " + remaining + "m, speed " + speed + "m/s");
-            Require(command.Acceleration.IsFinite && command.Acceleration.Length <= state.Thrust + 1e-7, "Invalid thrust in " + name);
+            Assert.True(command.Phase != FlightPhase.Escape, "The arrival profile needlessly triggered target-body avoidance in " + name + " at " + state.Time + "s, remaining " + remaining + "m, speed " + speed + "m/s");
+            Assert.True(command.Acceleration.IsFinite && command.Acceleration.Length <= state.Thrust + 1e-7, "Invalid thrust in " + name);
+
             if (brakingStart >= 0)
             {
-                Require(command.Phase == FlightPhase.Braking || command.Phase == FlightPhase.Arrived, "Approach/braking oscillation in " + name);
+                Assert.True(command.Phase == FlightPhase.Braking || command.Phase == FlightPhase.Arrived, "Approach/braking oscillation in " + name);
             }
 
             if (command.Phase == FlightPhase.Braking)
@@ -98,7 +103,8 @@ internal static class BrakingTests
 
             if (command.Phase == FlightPhase.Arrived)
             {
-                Require(Math.Abs(remaining) < 60 && speed < 0.5, "Unsafe arrival in " + name);
+                Assert.True(Math.Abs(remaining) < 60 && speed < 0.5, "Unsafe arrival in " + name);
+
                 var result = new BrakingResult(state.Time, state.Time - brakingStart, slowTime, peakSpeed, remaining);
                 Console.WriteLine($"RESULT {name}: total={result.TotalTime:F2}s, braking={result.BrakingTime:F2}s, below30={result.SlowTime:F2}s, peak={result.PeakSpeed:F1}m/s, arrivalError={result.ArrivalError:F1}m");
 
@@ -119,14 +125,14 @@ internal static class BrakingTests
 
     public static void VerifyRefinement()
     {
-        var clear = Fly("Clear", 0, 50, 0.02, default);
+        var clear   = Fly("Clear", 0, 50, 0.02, default);
         var gravity = Fly("Increasing attraction", 12, 50, 0.02, default);
-        var cross = Fly("Cross gravity and moving target", 0, 50, 1.0 / 60, new Vector(0, -8, 0));
+        var cross   = Fly("Cross gravity and moving target", 0, 50, 1.0 / 60, new Vector(0, -8, 0));
         var limited = Fly("Locally limited thrust", 6, 20, 0.02, default);
+
         // The limited-thrust case must now restore its 25m overshoot before it can finish.
-        Require(limited.ArrivalError >= -10, "Limited thrust was accepted before restoring arrival distance");
-        Require(clear.BrakingTime < 16 && gravity.BrakingTime < 17 && cross.BrakingTime < 18 && limited.BrakingTime < 29,
-            "Clear-approach braking regressed toward the previous drawn-out profile");
+        Assert.True(limited.ArrivalError >= -10, "Limited thrust was accepted before restoring arrival distance");
+        Assert.True(clear.BrakingTime < 16 && gravity.BrakingTime < 17 && cross.BrakingTime < 18 && limited.BrakingTime < 29, "Clear-approach braking regressed toward the previous drawn-out profile");
     }
 
     public static void TargetClearance()
@@ -138,13 +144,5 @@ internal static class BrakingTests
     public static void LateralMomentum()
     {
         Fly("Braking with initial lateral momentum", 0, 50, 0.02, default, initialVelocity: new Vector(500, 100, 0), initialDistance: 5500);
-    }
-
-    private static void Require(bool condition, string message)
-    {
-        if (!condition)
-        {
-            throw new Exception(message);
-        }
     }
 }

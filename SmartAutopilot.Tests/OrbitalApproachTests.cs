@@ -1,13 +1,9 @@
+using Xunit;
 using System;
 using SmartAutopilot.Navigation;
 
 internal static class OrbitalApproachTests
 {
-    public static void Profile()
-    {
-        Run(false);
-    }
-
     public static void Verify()
     {
         Run(true);
@@ -15,6 +11,8 @@ internal static class OrbitalApproachTests
 
     public static void Prediction()
     {
+        const double time = Math.PI / 0.1;
+
         var drift = new Vector(120, -30, 50);
         var translation = new Vector(1e7, -2e7, 3e7);
         var state = new FlightState();
@@ -32,26 +30,27 @@ internal static class OrbitalApproachTests
             Acceleration = new Vector(-12.5, 0, 0),
             Radius       = 300
         });
-        Require(OrbitalMotion.TryCreate(state, 1, out var orbit), "Circular orbit was not recognized");
-        double time = Math.PI / 0.1;
-        Require((orbit.Position(time) - translation - drift * time - new Vector(0, 0, 5000)).Length < 1e-6,
-            "Orbit prediction failed after translation or a moving reference frame");
-        Require(orbit.ExcludesLinearPath(translation + new Vector(8000, 0, 0), drift, 400, 20), "Distant path was not outside the whole orbit");
-        Require(!orbit.ExcludesLinearPath(translation + new Vector(8000, 0, 0), drift + new Vector(-400, 0, 0), 400, 20),
-            "Orbit envelope rejected an actual inward collision course");
+        Assert.True(OrbitalMotion.TryCreate(state, 1, out var orbit), "Circular orbit was not recognized");
+        Assert.True((orbit.Position(time) - translation - drift * time - new Vector(0, 0, 5000)).Length < 1e-6, "Orbit prediction failed after translation or a moving reference frame");
+        Assert.True(orbit.ExcludesLinearPath(translation + new Vector(8000, 0, 0), drift, 400, 20), "Distant path was not outside the whole orbit");
+        Assert.True(!orbit.ExcludesLinearPath(translation + new Vector(8000, 0, 0), drift + new Vector(-400, 0, 0), 400, 20), "Orbit envelope rejected an actual inward collision course");
+
         state.Obstacles[1].Velocity = drift + new Vector(20, 0, 250);
-        Require(OrbitalMotion.TryCreate(state, 1, out var eccentric), "Mild radial motion prevented bounded target prediction");
-        Require(!eccentric.ExcludesLinearPath(translation + new Vector(8000, 0, 0), drift, 400, 20),
-            "An unstable orbit radius suppressed collision avoidance");
+
+        Assert.True(OrbitalMotion.TryCreate(state, 1, out var eccentric), "Mild radial motion prevented bounded target prediction");
+        Assert.True(!eccentric.ExcludesLinearPath(translation + new Vector(8000, 0, 0), drift, 400, 20), "An unstable orbit radius suppressed collision avoidance");
+
         state.Obstacles[1].Acceleration = new Vector(12.5, 0, 0);
-        Require(!OrbitalMotion.TryCreate(state, 1, out _), "Outward acceleration was mistaken for an orbit");
+
+        Assert.True(!OrbitalMotion.TryCreate(state, 1, out _), "Outward acceleration was mistaken for an orbit");
+
         state.Obstacles[1].PrimaryIndex = 50;
-        Require(!OrbitalMotion.TryCreate(state, 1, out _), "Invalid primary index was accepted");
+        Assert.True(!OrbitalMotion.TryCreate(state, 1, out _), "Invalid primary index was accepted");
     }
 
     public static void SatelliteTangent()
     {
-        double speed = Math.Sqrt(75 * 2300);
+        var speed = Math.Sqrt(75 * 2300);
         var state = new FlightState
         {
             Position             = new Vector(4906.14, 346.43, 2201.37),
@@ -78,14 +77,17 @@ internal static class OrbitalApproachTests
         });
         var computer = new FlightComputer();
         state.Obstacles[1].PrimaryIndex = 99;
-        Require(new FlightComputer().Step(state).Phase == FlightPhase.Escape, "Invalid orbital context bypassed conservative avoidance");
+        Assert.True(new FlightComputer().Step(state).Phase == FlightPhase.Escape, "Invalid orbital context bypassed conservative avoidance");
+
         state.Obstacles[1].PrimaryIndex = 0;
         var command = computer.Step(state);
-        Require(command.Phase != FlightPhase.Escape, "A distant satellite tangent interrupted a clear approach outside its whole orbit");
-        state.Position = state.Obstacles[1].Position + new Vector(320, 0, 0);
-        state.Velocity = state.Obstacles[1].Velocity;
+        Assert.True(command.Phase != FlightPhase.Escape, "A distant satellite tangent interrupted a clear approach outside its whole orbit");
+
+        state.Position            = state.Obstacles[1].Position + new Vector(320, 0, 0);
+        state.Velocity            = state.Obstacles[1].Velocity;
         state.Obstacles[0].Radius = 1000;
-        Require(new FlightComputer().Step(state).Phase == FlightPhase.Escape, "Orbit prediction suppressed an immediate nearby hazard");
+
+        Assert.True(new FlightComputer().Step(state).Phase == FlightPhase.Escape, "Orbit prediction suppressed an immediate nearby hazard");
     }
 
     public static void ForecastFallback()
@@ -118,7 +120,7 @@ internal static class OrbitalApproachTests
             Position = new Vector(Math.Cos(0.056 * 12), 0, Math.Sin(0.056 * 12)) * 5000,
             Radius   = 1300
         });
-        Require(new FlightComputer().Step(state).Phase == FlightPhase.Detour, "A blocked forecast discarded an available route to the current arrival region");
+        Assert.True(new FlightComputer().Step(state).Phase == FlightPhase.Detour, "A blocked forecast discarded an available route to the current arrival region");
     }
 
     private static void Run(bool verify)
@@ -132,8 +134,9 @@ internal static class OrbitalApproachTests
     private static void Flight(string name, Vector start, Vector velocity, double phase, bool binary, bool verify)
     {
         const double gravityParameter = 4e8;
-        const double orbitRadius = 5000;
-        double omega = Math.Sqrt(gravityParameter / (orbitRadius * orbitRadius * orbitRadius));
+        const double orbitRadius      = 5000;
+
+        var omega = Math.Sqrt(gravityParameter / (orbitRadius * orbitRadius * orbitRadius));
         var state = new FlightState
         {
             Position            = start,
@@ -165,25 +168,28 @@ internal static class OrbitalApproachTests
             });
         }
 
-        var computer = new FlightComputer();
-        int escapes = 0;
-        var lastPhase = FlightPhase.Cruise;
-        double minimumSunDistance = start.Length;
-        bool arrived = false;
+        var computer           = new FlightComputer();
+        var escapes            = 0;
+        var lastPhase          = FlightPhase.Cruise;
+        var minimumSunDistance = start.Length;
+        var arrived            = false;
         for (int step = 0; step < 15000; step++)
         {
             state.Time = step * state.DeltaTime;
-            double angle = phase + omega * state.Time;
-            var radial = new Vector(Math.Cos(angle), 0, Math.Sin(angle));
-            var tangent = new Vector(-Math.Sin(angle), 0, Math.Cos(angle));
-            var binaryRadial = binary ? new Vector(Math.Cos(state.Time * 0.12), 0, Math.Sin(state.Time * 0.12)) : default;
+
+            var angle         = phase + omega * state.Time;
+            var radial        = new Vector(Math.Cos(angle), 0, Math.Sin(angle));
+            var tangent       = new Vector(-Math.Sin(angle), 0, Math.Cos(angle));
+            var binaryRadial  = binary ? new Vector(Math.Cos(state.Time * 0.12), 0, Math.Sin(state.Time * 0.12)) : default;
             var binaryTangent = new Vector(-binaryRadial.Z, 0, binaryRadial.X);
-            state.TargetPosition     = radial * orbitRadius + binaryRadial * 400;
-            state.TargetVelocity     = tangent * (orbitRadius * omega) + binaryTangent * 48;
-            state.TargetAcceleration = radial * (-orbitRadius * omega * omega) - binaryRadial * 5.76;
+
+            state.TargetPosition            = radial  * orbitRadius                    + binaryRadial  * 400;
+            state.TargetVelocity            = tangent * (orbitRadius  * omega)         + binaryTangent * 48;
+            state.TargetAcceleration        = radial  * (-orbitRadius * omega * omega) - binaryRadial  * 5.76;
             state.Obstacles[1].Position     = state.TargetPosition;
             state.Obstacles[1].Velocity     = state.TargetVelocity;
             state.Obstacles[1].Acceleration = state.TargetAcceleration;
+
             if (binary)
             {
                 state.Obstacles[2].Position     = radial * orbitRadius - binaryRadial * 400;
@@ -228,19 +234,12 @@ internal static class OrbitalApproachTests
 
         }
 
-        double remaining = (state.Position - state.TargetPosition).Length - state.ArrivalRadius;
+        var remaining = (state.Position - state.TargetPosition).Length - state.ArrivalRadius;
         Console.WriteLine($"ORBIT {name}: arrived={arrived}; time={state.Time:F2}s; remaining={remaining:F1}m; escapes={escapes}; minSunDistance={minimumSunDistance:F1}m");
+
         if (verify && (!arrived || state.Time > 105 || escapes > 2 || remaining < -10 || remaining > 100))
         {
             throw new Exception("Orbital approach failed to finish reliably: " + name);
-        }
-    }
-
-    private static void Require(bool condition, string message)
-    {
-        if (!condition)
-        {
-            throw new Exception(message);
         }
     }
 }

@@ -17,6 +17,7 @@ internal static class AutomationRequestTests
             request.fault              = "autopilot-damage";
             request.cancelAfterSeconds = 5;
         });
+
         foreach (string fault in new[] { "fuel-exhaustion", "autopilot-damage", "insufficient-thrust", "blocked-route" })
         {
             var faultRequest = Create(now);
@@ -24,6 +25,7 @@ internal static class AutomationRequestTests
             faultRequest.fault   = fault;
             faultRequest.Validate(now);
         }
+
         Reject(now, request => request.expiresUtc        = now.AddSeconds(-1).ToString("O"));
         Reject(now, request => request.expiresUtc        = now.AddDays(1).ToString("O"));
         Reject(now, request => request.targets           = []);

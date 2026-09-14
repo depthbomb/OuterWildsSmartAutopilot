@@ -1,3 +1,4 @@
+using Xunit;
 using System;
 using SmartAutopilot.Navigation;
 
@@ -25,20 +26,23 @@ internal static class ArrivalRecoveryTests
                 {
                     state.Position = new Vector(500, 0, 0);
                     state.Velocity = state.TargetVelocity + new Vector(-100, 0, 0);
-                    Require(computer.Step(state).Phase == FlightPhase.Braking, "Fixture did not enter braking");
+
+                    Assert.True(computer.Step(state).Phase == FlightPhase.Braking, "Fixture did not enter braking");
+
                     state.Position = new Vector(210 + remaining, 0, 0);
                     state.Velocity = state.TargetVelocity + new Vector(-0.1, 0, 0);
                 }
 
-                Require(computer.Step(state).Phase == FlightPhase.Arrived,
-                    "A velocity-matched satellite approach stalled just outside the 20m braking boundary");
+                Assert.True(computer.Step(state).Phase == FlightPhase.Arrived, "A velocity-matched satellite approach stalled just outside the 20m braking boundary");
             }
         }
 
         var outside = Create(210, -22, default, 50, 0.02);
-        Require(new FlightComputer().Step(outside).Phase != FlightPhase.Arrived, "The boundary tolerance accepted a distant approach");
+        Assert.True(new FlightComputer().Step(outside).Phase != FlightPhase.Arrived, "The boundary tolerance accepted a distant approach");
+
         var fast = Create(210, -20.1, new Vector(-10, 0, 0), 50, 0.02);
-        Require(new FlightComputer().Step(fast).Phase != FlightPhase.Arrived, "The boundary tolerance accepted unmatched velocity");
+        Assert.True(new FlightComputer().Step(fast).Phase != FlightPhase.Arrived, "The boundary tolerance accepted unmatched velocity");
+
         var obstructed = Create(210, -20.1, default, 50, 0.02);
         obstructed.Obstacles.Add(new Obstacle
         {
@@ -48,7 +52,7 @@ internal static class ArrivalRecoveryTests
             Radius         = 100,
             PhysicalRadius = 50
         });
-        Require(new FlightComputer().Step(obstructed).Phase == FlightPhase.Escape, "Arrival tolerance overrode collision avoidance");
+        Assert.True(new FlightComputer().Step(obstructed).Phase == FlightPhase.Escape, "Arrival tolerance overrode collision avoidance");
     }
 
     public static void RecoverDistance()
@@ -67,7 +71,9 @@ internal static class ArrivalRecoveryTests
         var state = Create(600, 134.3, default, 50, 0.02);
         var computer = new FlightComputer();
         var recovery = computer.Step(state);
-        Require(recovery.Phase != FlightPhase.Arrived, "Arrival was accepted before restoring distance");
+
+        Assert.True(recovery.Phase != FlightPhase.Arrived, "Arrival was accepted before restoring distance");
+
         state.Obstacles.Add(new Obstacle
         {
             Position       = state.Position + new Vector(125, 0, 0),
@@ -78,32 +84,32 @@ internal static class ArrivalRecoveryTests
         });
         state.Time += state.DeltaTime;
         var avoidance = computer.Step(state);
-        Require(avoidance.Phase == FlightPhase.Escape && avoidance.Acceleration.X < 0,
-            "Distance recovery overrode avoidance of a body in the outward path");
+
+        Assert.True(avoidance is { Phase: FlightPhase.Escape, Acceleration.X: < 0 }, "Distance recovery overrode avoidance of a body in the outward path");
     }
 
     private static void Simulate(double radius, double deficit, Vector relativeVelocity, double thrust, double timestep)
     {
-        var state = Create(radius, deficit, relativeVelocity, thrust, timestep);
+        var state    = Create(radius, deficit, relativeVelocity, thrust, timestep);
         var computer = new FlightComputer();
         for (int step = 0; step < 2000; step++)
         {
             state.Time = step * timestep;
             var command = computer.Step(state);
-            Require(command.Acceleration.IsFinite && command.Acceleration.Length <= thrust + 1e-7,
-                "Distance recovery exceeded available thrust");
-            double error = (state.Position - state.TargetPosition).Length - radius;
+
+            Assert.True(command.Acceleration.IsFinite && command.Acceleration.Length <= thrust + 1e-7, "Distance recovery exceeded available thrust");
+
+            var error = (state.Position - state.TargetPosition).Length - radius;
             if (command.Phase == FlightPhase.Arrived)
             {
-                Require(error >= -10 && error <= 10, "Arrival was accepted with distance error " + error);
-                Require((state.Velocity - state.TargetVelocity).Length < 0.5, "Recovery did not match target velocity");
-                Require(state.Time < 25, "Distance recovery took too long");
-
+                Assert.True(error is >= -10 and <= 10, "Arrival was accepted with distance error " + error);
+                Assert.True((state.Velocity - state.TargetVelocity).Length < 0.5, "Recovery did not match target velocity");
+                Assert.True(state.Time < 25, "Distance recovery took too long");
                 return;
             }
 
-            state.Position += state.Velocity * timestep + (command.Acceleration + state.ExternalAcceleration) * (0.5 * timestep * timestep);
-            state.Velocity += (command.Acceleration + state.ExternalAcceleration) * timestep;
+            state.Position       += state.Velocity * timestep + (command.Acceleration + state.ExternalAcceleration) * (0.5 * timestep * timestep);
+            state.Velocity       += (command.Acceleration + state.ExternalAcceleration) * timestep;
             state.TargetPosition += state.TargetVelocity * timestep + state.TargetAcceleration * (0.5 * timestep * timestep);
             state.TargetVelocity += state.TargetAcceleration * timestep;
         }
@@ -114,7 +120,6 @@ internal static class ArrivalRecoveryTests
     private static FlightState Create(double radius, double deficit, Vector relativeVelocity, double thrust, double timestep)
     {
         var targetVelocity = new Vector(130, 20, -60);
-
         return new FlightState
         {
             Position             = new Vector(radius - deficit, 0, 0),
@@ -127,13 +132,5 @@ internal static class ArrivalRecoveryTests
             MaximumThrust        = thrust,
             DeltaTime            = timestep
         };
-    }
-
-    private static void Require(bool condition, string message)
-    {
-        if (!condition)
-        {
-            throw new Exception(message);
-        }
     }
 }

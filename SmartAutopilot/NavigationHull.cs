@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using SmartAutopilot.Navigation;
 using UnityEngine;
 using Vector = SmartAutopilot.Navigation.Vector;
@@ -12,17 +10,21 @@ namespace SmartAutopilot
 
         private double _radius;
         private double _nextScan;
+
         private readonly OWRigidbody _body;
         private readonly OWRigidbody _staticBody;
-        private readonly Collider[] _colliders;
+        private readonly Collider[]  _colliders;
 
         public NavigationHull(OWRigidbody body)
         {
             _body = body;
+
             var controller = Locator.GetRingWorldController();
+
             _staticBody = controller != null && controller.GetRingWorldBody() == body ? GameFields.StaticRingBody.Get(controller) : null;
-            var colliders = new List<Collider>(body.GetComponentsInChildren<Collider>(true));
-            bool separateBody = _staticBody != null && _staticBody != body && !_staticBody.transform.IsChildOf(body.transform);
+
+            var colliders    = new List<Collider>(body.GetComponentsInChildren<Collider>(true));
+            var separateBody = _staticBody != null && _staticBody != body && !_staticBody.transform.IsChildOf(body.transform);
             if (separateBody)
             {
                 colliders.AddRange(_staticBody.GetComponentsInChildren<Collider>(true));
@@ -39,18 +41,20 @@ namespace SmartAutopilot
             }
 
             _nextScan = time + 0.75;
+
             ColliderCount = 0;
+
             var origin = _body.GetWorldCenterOfMass();
             foreach (var collider in _colliders)
             {
-                bool physical = collider != null && !collider.isTrigger && (1 << collider.gameObject.layer & OWLayerMask.physicalMask) != 0;
+                var physical = collider != null && !collider.isTrigger && (1 << collider.gameObject.layer & OWLayerMask.physicalMask) != 0;
                 if (!physical)
                 {
                     continue;
                 }
 
-                var  parentBody = collider.GetComponentInParent<OWRigidbody>();
-                bool attached   = parentBody == _body || _staticBody != null && parentBody == _staticBody;
+                var parentBody = collider.GetComponentInParent<OWRigidbody>();
+                var attached   = parentBody == _body || _staticBody != null && parentBody == _staticBody;
                 if (!attached)
                 {
                     continue;
@@ -78,12 +82,11 @@ namespace SmartAutopilot
                     }
                     default:
                     {
-                        bool active = collider.enabled && collider.gameObject.activeInHierarchy;
+                        var active = collider.enabled && collider.gameObject.activeInHierarchy;
                         if (active)
                         {
                             var world = collider.bounds;
-                            _radius = Math.Max(_radius, HullEnvelope.BoxRadius(FromUnity(world.center - origin),
-                                new Vector(world.extents.x, 0, 0), new Vector(0, world.extents.y, 0), new Vector(0, 0, world.extents.z)));
+                            _radius = Math.Max(_radius, HullEnvelope.BoxRadius(FromUnity(world.center - origin), new Vector(world.extents.x, 0, 0), new Vector(0, world.extents.y, 0), new Vector(0, 0, world.extents.z)));
                             ColliderCount++;
                         }
                         continue;
