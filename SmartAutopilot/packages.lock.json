@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "dependencies": {
+    ".NETFramework,Version=v4.8": {
+      "Microsoft.NETFramework.ReferenceAssemblies": {
+        "type": "Direct",
+        "requested": "[1.0.3, )",
+        "resolved": "1.0.3",
+        "contentHash": "vUc9Npcs14QsyOD01tnv/m8sQUnGTGOw1BCmKcv77LBJY7OxhJ+zJF7UD/sCL3lYNFuqmQEVlkfS4Quif6FyYg==",
+        "dependencies": {
+          "Microsoft.NETFramework.ReferenceAssemblies.net48": "1.0.3"
+        }
+      },
+      "OuterWildsGameLibs": {
+        "type": "Direct",
+        "requested": "[1.1.16.1372, )",
+        "resolved": "1.1.16.1372",
+        "contentHash": "bHAf5iqBFS1g0LJQtDxo+BfnDLQOjjKvV6APgZZ2Z+F8VZyBQ4ybXKBXYlr7PkNwq8aNL8evvPb69kBt09EHEg=="
+      },
+      "OWML": {
+        "type": "Direct",
+        "requested": "[2.16.3, )",
+        "resolved": "2.16.3",
+        "contentHash": "iDATUB8QYubEGOQhpFWEMGv9kcYIXL5/uis7pcJV3TxEEXIfruLCNQES7VMVWIs4fu71XdFOiZg0xNIx7t+xiA==",
+        "dependencies": {
+          "HarmonyX": "2.5.5",
+          "Json.Net.Unity3D": "9.0.1"
+        }
+      },
+      "HarmonyX": {
+        "type": "Transitive",
+        "resolved": "2.5.5",
+        "contentHash": "sQTQhNCwbob8JnnLsJibcorfjQGi2ziseb8uIOtyWrIv/RrbH1bJiwwX6hyLHCrgLMbzBd5Z15SukTXlmfcYLQ==",
+        "dependencies": {
+          "MonoMod.RuntimeDetour": "21.8.19.1"
+        }
+      },
+      "Json.Net.Unity3D": {
+        "type": "Transitive",
+        "resolved": "9.0.1",
+        "contentHash": "rp7q5dZ1SxGJU9NcDp60ERg0UnuqcjZBmVQsBn463yp429K2BsJHaN53iI7c7rsRvoSsGhz3SUHv+Lvd/TIz1A=="
+      },
+      "Microsoft.NETFramework.ReferenceAssemblies.net48": {
+        "type": "Transitive",
+        "resolved": "1.0.3",
+        "contentHash": "zMk4D+9zyiEWByyQ7oPImPN/Jhpj166Ky0Nlla4eXlNL8hI/BtSJsgR8Inldd4NNpIAH3oh8yym0W2DrhXdSLQ=="
+      },
+      "Mono.Cecil": {
+        "type": "Transitive",
+        "resolved": "0.11.4",
+        "contentHash": "IC1h5g0NeJGHIUgzM1P82ld57knhP0IcQfrYITDPXlNpMYGUrsG5TxuaWTjaeqDNQMBDNZkB8L0rBnwsY6JHuQ=="
+      },
+      "MonoMod.RuntimeDetour": {
+        "type": "Transitive",
+        "resolved": "21.8.19.1",
+        "contentHash": "fUEvDK4q9n+GAAB29vFKAsUIwhKAvZTVbn2WJemzLxbiTElutZ55ytUQxSSv6XhiRaJXrl5bSArO54PY0QNplw==",
+        "dependencies": {
+          "Mono.Cecil": "0.11.4",
+          "MonoMod.Utils": "21.8.19.1"
+        }
+      },
+      "MonoMod.Utils": {
+        "type": "Transitive",
+        "resolved": "21.8.19.1",
+        "contentHash": "HsH5TBMUdJmQtdINdYFG5a3BvCeGPezDX42qgv+h539drpNdD+qE7/NT6BtcmDI+y6VSVClFdnzcVNrOvTSfWQ==",
+        "dependencies": {
+          "Mono.Cecil": "0.11.4"
+        }
+      }
+    }
+  }
+}

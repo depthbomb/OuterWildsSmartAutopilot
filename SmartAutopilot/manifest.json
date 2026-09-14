@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/ow-mods/owml/master/schemas/manifest_schema.json",
+  "filename": "SmartAutopilot.dll",
+  "author": "depthbomb",
+  "name": "Smart Autopilot",
+  "uniqueName": "Depthbomb.SmartAutopilot",
+  "version": "0.1.0",
+  "owmlVersion": "2.16.3",
+  "dependencies": [],
+  "minGameVersion": "1.1.16.1372",
+  "maxGameVersion": "1.1.16.1372",
+  "warning": {
+    "title": "This mod is experimental",
+    "body": "Remain at the controls. Automatic launch requires open overhead space. Navigation avoids celestial bodies and brakes for loaded physical obstacles; it does not land, enter confined spaces, or avoid every moving object or hazard. Cancel autopilot to take manual control."
+  }
+}

@@ -1,0 +1,7 @@
+.idea/
+**/bin/
+**/obj/
+artifacts/
+*.user
+*.csproj.user
+.vs/

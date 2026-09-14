@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/ow-mods/owml/master/schemas/config_schema.json",
+  "enabled": true,
+  "settings": {
+    "Optional speed limit (m/s, 0 = automatic)": 0.0,
+    "Extra clearance (m)": 100.0,
+    "Log navigation changes": true,
+    "Log detailed flight samples": false,
+    "Show navigation debug overlay": false,
+    "Debug overlay refresh rate (Hz)": 60.0
+  }
+}
