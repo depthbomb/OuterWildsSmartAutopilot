@@ -49,16 +49,40 @@ The defaults use automatic speed selection and **100m of extra clearance**. You 
 - **Show navigation debug overlay:** draws the planned route, arrival boundary, avoidance zones, and clearance checks in the world. You can toggle it during flight.
 - **Debug overlay refresh rate:** defaults to 60 Hz, adjustable from 10 to 120. The game's frame rate still limits how often it can draw.
 
-If something looks wrong, turn on **Log detailed flight samples** and include the OWML log when reporting it. Mention your destination, where you launched from, other enabled mods, and whether you cancelled the autopilot yourself. A short recording with the debug overlay on can help, too. Logs and recordings may contain spoilers.
+If something looks wrong, turn on **Log detailed flight samples** and include the OWML log when reporting it. Mention your destination, where you launched from, other enabled mods, and whether you canceled the autopilot yourself. A short recording with the debug overlay on can help, too. Logs and recordings may contain spoilers!
 
 ## Building
 
-With the .NET 10 SDK specified in `global.json`, Outer Wilds, and OWML installed:
+Open `SmartAutopilot.sln` in your IDE, or use the .NET 10 SDK specified in `global.json`:
 
 ```powershell
-.\build.ps1
+dotnet build -c Release
 ```
 
-That builds, runs the checks, creates the mod ZIP in `artifacts`, and installs the mod with your settings preserved. Close the game first. Custom install locations can be passed with `-GamePath` and `-OwmlPath`.
+The mod uses the same project layout and local output configuration as the [official OWML template](https://github.com/ow-mods/ow-mod-template). Builds normally go into `SmartAutopilot/bin/Release`.
 
-Use `-ChecksOnly` for the portable checks without installing or creating a package. These don't replace in-game testing.
+To build straight into your OWML mod folder, copy `SmartAutopilot/SmartAutopilot.csproj.user.example` to `SmartAutopilot/SmartAutopilot.csproj.user`. Edit its output path if you use a different install location. This file is ignored by Git. Close the game before building; your existing mod settings are preserved.
+
+To make the release ZIP and checksum in `artifacts`:
+
+```powershell
+.\Package.ps1
+```
+
+Packaging uses a separate output folder, so it works with or without the local install configuration. The **Create Release** GitHub workflow runs the tests, packages the mod, and creates a draft release using the version in `manifest.json`. Set the same version in the project file before preparing a new release.
+
+## Tests
+
+```powershell
+dotnet test -c Release
+```
+
+Tests cover navigation, launch, braking, failure handling, and performance without needing the game installed. Each regression appears separately in your IDE's test runner.
+
+For an optional in-game navigation test, with Outer Wilds and OWML installed:
+
+```powershell
+.\tools\Run-AutomatedPlaytest.ps1 -Build
+```
+
+That launches its own game session, flies the test route, records the results, closes the game, and restores your saves. The game and launcher must be closed before starting. Other gameplay mods can affect the result. The automated runner doesn't replace testing physical inputs or flight feel yourself.
