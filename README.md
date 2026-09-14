@@ -10,7 +10,7 @@ Gives your ship's autopilot a little more sense. It can launch from suitable sur
       </a>
 </div>
 
-## Install
+## Install (until approved)
 
 Install the mod ZIP through [Outer Wilds Mod Manager](https://outerwildsmods.com/mod-manager/):
 
